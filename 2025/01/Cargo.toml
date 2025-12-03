@@ -1,0 +1,8 @@
+[package]
+name = "secret_entrance"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tap = "1.0.1"
+winnow = "0.7.14"
