@@ -1,9 +1,7 @@
-#![allow(unused)]
-
 use std::{
     cmp::{max, min},
     ops::RangeInclusive,
-    path::{Path, PathBuf},
+    path::PathBuf,
 };
 
 use clap::Parser;
