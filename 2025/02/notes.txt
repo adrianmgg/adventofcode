@@ -1,0 +1,46 @@
+for ids NN
+
+1-digit Ns map to
+    lo 11
+    hi 99
+    count 9
+    step 11
+
+2-digit Ns
+    lo 1010
+    hi 9999
+    count 
+    step 101 (1111 - 1010)
+
+3-digit Ns
+    lo 100100
+    hi 999999
+    step = (101101 - 100100) = 1001
+
+
+D-digit Ns
+    minN = (10^(D-1))
+        // 1, 10, 100, 1000, ...
+    maxN = (10^D)-1
+        // 9, 99, 999, 9999, ...
+    step = (10^D)+1
+        // 11, 101, 1001, 10001, ...
+    lo = (minN * (10^D)) + (minN)
+        // 11, 1010, 100100, 10001000, ...
+    hi = <same as for lo but use maxN>
+        // 99, 9999, 999999, 99999999, ...
+
+given (lo, hi, step) of a block of bad ids,
+ and given some n,
+ want to find the smallest bad id gte n
+	say (lo=1010, hi=9999, step=101)
+						a=		b=		c=
+		n		answr	n-lo	a%step	step-b	n+c
+		1110	1111	100		100		1		1111
+		1111	1111	101		0		101		1212
+		1112	1212	102		1		100		1212
+		+ special case for (b==0) and that'll work
+
+
+
+
