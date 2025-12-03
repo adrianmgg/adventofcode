@@ -7,55 +7,21 @@ use winnow::{
     token::take,
 };
 
-// 17406 -> too low
-
 fn main() {
     let input_file = std::env::args().nth(1).expect("no file specified");
     let txt = std::fs::read_to_string(input_file).expect("reading input file failed");
 
-    let banks: Vec<Vec<u8>> = parse_banks
+    let banks = parse_banks
         .parse(txt.as_str())
         .expect("parsing input failed");
 
-    let answer_pt1: u64 = banks.iter().map(|bank| logic_pt1(bank)).sum();
+    let answer_pt1: u64 = banks.iter().map(|bank| logic(bank, 2)).sum();
     dbg!(answer_pt1);
-    let answer_pt2: u64 = banks.iter().map(|bank| logic_pt2(bank, 12)).sum();
+    let answer_pt2: u64 = banks.iter().map(|bank| logic(bank, 12)).sum();
     dbg!(answer_pt2);
 }
 
-fn logic_pt1(bank: &[u8]) -> u64 {
-    let (tens_idx, tens) = bank
-        .iter()
-        .enumerate()
-        // skip the last digit
-        .tap_mut(|it| {
-            it.next_back();
-        })
-        // take the earliest available instance of the highest available digit
-        .max_by_key(|(idx, digit)| (*digit, std::cmp::Reverse(*idx)))
-        // we can safely unwrap since we know from the parser there's at least 2 elements
-        // in the list
-        .unwrap();
-    let ones = bank.iter().skip(tens_idx + 1).max().unwrap();
-    ((*tens as u64) * 10) + (*ones as u64)
-}
-
-fn logic_pt1_bruteforce(bank: &[u8]) -> u64 {
-    bank.iter()
-        .enumerate()
-        .tap_mut(|it| {
-            it.next_back();
-        })
-        .flat_map(|(tens_idx, tens)| {
-            bank.iter()
-                .skip(tens_idx + 1)
-                .map(|ones| ((*tens as u64) * 10) + (*ones as u64))
-        })
-        .max()
-        .unwrap()
-}
-
-fn logic_pt2(bank: &[u8], ndigits: usize) -> u64 {
+fn logic(bank: &[u8], ndigits: usize) -> u64 {
     let mut ret = 0u64;
 
     // index before which we can no longer use digits from
