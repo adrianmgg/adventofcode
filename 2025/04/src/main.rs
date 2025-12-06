@@ -1,6 +1,5 @@
 use std::fmt::Display;
 
-use grid::Grid;
 use itertools::Itertools;
 use tap::Pipe as _;
 use winnow::Parser as _;
@@ -33,35 +32,31 @@ impl Display for CellKind {
 
 struct FactoryFloor {
     ground: grid::Grid<CellKind>,
-    accessible: grid::Grid<bool>,
 }
 
 impl FactoryFloor {
     fn parse(input: &str) -> Result<Self, ()> {
         let ground = parser::grid.parse(input).map_err(|_| ())?;
-        let mut accessible = Grid::new_with_order(ground.rows(), ground.cols(), ground.order());
-        accessible.indexed_iter_mut().for_each(|((x, y), out)| {
-            let &kind = ground.get(x, y).unwrap();
-            if kind == CellKind::Empty {
-                *out = true;
-                return;
-            }
-            let adjacent_papers = (x.saturating_sub(1)..=(x + 1))
-                .cartesian_product(y.saturating_sub(1)..=(y + 1))
-                .filter(|&(ax, ay)| ax != x || ay != y)
-                .filter_map(|(ax, ay)| ground.get(ax, ay))
-                .filter(|kind| matches!(kind, CellKind::Paper))
-                .count();
-            *out = adjacent_papers < 4;
-        });
-        Self { ground, accessible }.pipe(Ok)
+        Self { ground }.pipe(Ok)
+    }
+
+    fn n_adjacent_papers_at(&self, x: usize, y: usize) -> usize {
+        (x.saturating_sub(1)..=(x + 1))
+            .cartesian_product(y.saturating_sub(1)..=(y + 1))
+            .filter(|&(ax, ay)| ax != x || ay != y)
+            .filter_map(|(ax, ay)| self.ground.get(ax, ay))
+            .filter(|kind| matches!(kind, CellKind::Paper))
+            .count()
+    }
+
+    fn is_accessible(&self, x: usize, y: usize) -> bool {
+        self.n_adjacent_papers_at(x, y) < 4
     }
 
     fn n_accessible_rolls(&self) -> usize {
         self.ground
-            .iter()
-            .zip(self.accessible.iter())
-            .filter(|(kind, accessible)| matches!(kind, CellKind::Paper) && **accessible)
+            .indexed_iter()
+            .filter(|&((x, y), kind)| matches!(kind, CellKind::Paper) && self.is_accessible(x, y))
             .count()
     }
 }
