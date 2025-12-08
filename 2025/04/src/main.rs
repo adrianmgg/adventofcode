@@ -1,5 +1,6 @@
 use std::fmt::Display;
 
+use grid::Grid;
 use itertools::Itertools;
 use tap::Pipe as _;
 use winnow::Parser as _;
@@ -10,8 +11,9 @@ fn main() {
         .unwrap_or_else(|| "input.txt".into());
     let txt = std::fs::read_to_string(input_file).expect("reading input file failed");
 
-    let g = FactoryFloor::parse(txt.as_str()).expect("parsing input failed");
+    let mut g = DeptFloor::parse(txt.as_str()).expect("parsing input failed");
     dbg!(g.n_accessible_rolls());
+    dbg!(solve_pt2(&mut g));
 }
 
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
@@ -30,14 +32,52 @@ impl Display for CellKind {
     }
 }
 
-struct FactoryFloor {
-    ground: grid::Grid<CellKind>,
+fn surrounding_indices(
+    (x, y): (usize, usize),
+    radius: usize,
+) -> impl Iterator<Item = (usize, usize)> {
+    (x.saturating_sub(radius)..=(x + radius))
+        .cartesian_product(y.saturating_sub(radius)..=(y + radius))
+        .filter(move |&(ax, ay)| ax != x || ay != y)
 }
 
-impl FactoryFloor {
+struct DeptFloor {
+    ground: grid::Grid<CellKind>,
+    accessible: grid::Grid<bool>,
+}
+
+fn check_accessible(ground: &Grid<CellKind>, (x, y): (usize, usize)) -> bool {
+    surrounding_indices((x, y), 1)
+        .filter_map(|(xx, yy)| ground.get(xx, yy))
+        .filter(|kind| matches!(kind, CellKind::Paper))
+        .count()
+        .pipe(|n| n < 4)
+}
+
+fn solve_pt2(dept: &mut DeptFloor) -> u64 {
+    let mut n = 0;
+    loop {
+        let to_remove = dept.iter_accessible_papers().next();
+        match to_remove {
+            Some(to_remove) => {
+                dept.remove_paper(to_remove);
+                n += 1;
+            }
+            None => break,
+        }
+    }
+    n
+}
+
+impl DeptFloor {
     fn parse(input: &str) -> Result<Self, ()> {
         let ground = parser::grid.parse(input).map_err(|_| ())?;
-        Self { ground }.pipe(Ok)
+        let mut accessible =
+            Grid::new_with_order(ground.rows(), ground.cols(), ground.order());
+        accessible.indexed_iter_mut().for_each(|(pos, val)| {
+            *val = check_accessible(&ground, pos);
+        });
+        Ok(Self { ground, accessible })
     }
 
     fn n_adjacent_papers_at(&self, x: usize, y: usize) -> usize {
@@ -58,6 +98,24 @@ impl FactoryFloor {
             .indexed_iter()
             .filter(|&((x, y), kind)| matches!(kind, CellKind::Paper) && self.is_accessible(x, y))
             .count()
+    }
+
+    fn remove_paper(&mut self, (x, y): (usize, usize)) {
+        debug_assert!(matches!(self.ground.get(x, y), Some(CellKind::Paper)));
+        self.ground[(x, y)] = CellKind::Empty;
+        for (x, y) in surrounding_indices((x, y), 1) {
+            if let Some(v) = self.accessible.get_mut(x, y) {
+                *v = check_accessible(&self.ground, (x, y));
+            }
+        }
+    }
+
+    fn iter_accessible_papers(&self) -> impl Iterator<Item = (usize, usize)> {
+        self.ground
+            .indexed_iter()
+            .filter(|(_, kind)| matches!(kind, CellKind::Paper))
+            .filter(|(pos, _)| self.accessible.get(pos.0, pos.1).copied().unwrap())
+            .map(|(pos, _)| pos)
     }
 }
 
