@@ -90,3 +90,101 @@ mod parse {
             .parse_next(input)
     }
 }
+
+mod parse2 {
+    use std::ops::RangeInclusive;
+
+    use winnow::stream::{Offset, Stream};
+
+    #[derive(Debug)]
+    struct TransposeStream<'s> {
+        data: &'s str,
+        row_width: usize,
+    }
+
+    #[derive(Debug, Clone, Copy)]
+    struct Pos {
+        row_width: usize,
+        n_rows: usize,
+        x: usize,
+        y: usize,
+    }
+
+    impl Pos {
+        fn to_idx(&self) -> usize {
+            (self.x * self.n_rows) + self.y
+        }
+    }
+
+    impl Offset for Pos {
+        fn offset_from(&self, start: &Self) -> usize {
+            assert_eq!(self.row_width, start.row_width);
+            assert_eq!(self.n_rows, start.n_rows);
+            self.to_idx() - start.to_idx()
+        }
+    }
+
+    impl<'s> Offset<Pos> for TransposeStream<'s> {
+        fn offset_from(&self, start: &Pos) -> usize {
+            Pos {
+            })
+        }
+    }
+
+    impl<'s> Stream for TransposeStream<'s> {
+        type Token = char;
+
+        type Slice = RangeInclusive<Pos>;
+
+        type IterOffsets;
+
+        type Checkpoint = Pos;
+
+        fn iter_offsets(&self) -> Self::IterOffsets {
+            todo!()
+        }
+
+        fn eof_offset(&self) -> usize {
+            todo!()
+        }
+
+        fn next_token(&mut self) -> Option<Self::Token> {
+            todo!()
+        }
+
+        fn peek_token(&self) -> Option<Self::Token> {
+            todo!()
+        }
+
+        fn offset_for<P>(&self, predicate: P) -> Option<usize>
+        where
+            P: Fn(Self::Token) -> bool,
+        {
+            todo!()
+        }
+
+        fn offset_at(&self, tokens: usize) -> Result<usize, winnow::error::Needed> {
+            todo!()
+        }
+
+        fn next_slice(&mut self, offset: usize) -> Self::Slice {
+            todo!()
+        }
+
+        fn peek_slice(&self, offset: usize) -> Self::Slice {
+            todo!()
+        }
+
+        fn checkpoint(&self) -> Self::Checkpoint {
+            todo!()
+        }
+
+        fn reset(&mut self, checkpoint: &Self::Checkpoint) {
+            todo!()
+        }
+
+        fn raw(&self) -> &dyn core::fmt::Debug {
+            todo!()
+        }
+    }
+}
