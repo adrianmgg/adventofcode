@@ -11,7 +11,7 @@ _OPS_MAP = {'*': operator.mul, '+': operator.add}
 def main(input_file: Path):
     with input_file.open('r') as f:
         lines = f.readlines()
-        cols = zip[tuple[str, ...]](*lines)
+        cols = zip(*lines)
         entries = (
             (from_numdigits(col[:-1]), _OPS_MAP.get(col[-1], None))
             for col in cols
