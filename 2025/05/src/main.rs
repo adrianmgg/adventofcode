@@ -30,7 +30,8 @@ fn main() {
                 None => merged.push(range),
                 Some(prevrange) => {
                     if prevrange.end() >= range.start() {
-                        *prevrange = min(*prevrange.start(), *range.start())..=max(*prevrange.end(), *range.end());
+                        *prevrange = min(*prevrange.start(), *range.start())
+                            ..=max(*prevrange.end(), *range.end());
                     } else {
                         merged.push(range);
                     }
